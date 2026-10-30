@@ -10,7 +10,10 @@
 #include <utils/misc.h>
 #include <tools/color.h>
 
+#ifndef _WIN32
 #include <dirent.h>
+#endif
+#include <QDir>
 
 QWidget *colorDialog;
 QWidget *closeMenu;
@@ -216,11 +219,6 @@ void setupWidgets(){
     thicknessLabel->setAlignment(Qt::AlignLeft);
     penSizeSettingsLayout->addWidget(thicknessLabel, Qt::AlignLeft);
 
-    //thicknessLabel->setFixedSize(
-    //    colorDialog->size().width(),
-    //    butsize / 2
-    //);
-
     thicknessSlider->setFixedSize(
         colorDialog->size().width() - 2*PADDING,
         butsize
@@ -270,8 +268,6 @@ void setupWidgets(){
     styleLayout->addWidget(penButtons[PENTEXT],       0, 2, Qt::AlignCenter);
     styleLayout->addWidget(penButtons[SMART_PEN],     0, 3, Qt::AlignCenter);
     styleLayout->addWidget(penButtons[ERASER],        0, 4, Qt::AlignCenter);
-    //styleLayout->addWidget(toolButtons[CLEAR],        0, 5, Qt::AlignCenter);
-
 
     penTypeDialog = new QWidget();
     QGridLayout *penTypeLayout = new QGridLayout(penTypeDialog);
@@ -313,7 +309,6 @@ void setupWidgets(){
 
 
 /********** Color selection options **********/
-    // color selection
 
     colorDialog->setStyleSheet(
     "QWidget {"
@@ -442,16 +437,12 @@ void setupWidgets(){
     pageLayout->addWidget(penButtons[MUSIC],     0, 4, Qt::AlignCenter);
     pageLayout->addWidget(penButtons[CUSTOM],    0, 5, Qt::AlignCenter);
 
-    struct dirent *ep;
-    DIR *dp = opendir (BGDIR);
     int i = 6;
-    // custom overlay button offset is 200
-    if (dp != NULL) {
-        while ((ep = readdir (dp)) != NULL) {
-            if ((ep->d_name)[0] == '.') {
-                continue;
-            }
-            QString path = QString(BGDIR) + QString("/") + QString(ep->d_name);
+    QDir bgDir(BGDIR);
+    if (bgDir.exists()) {
+        QStringList entries = bgDir.entryList(QDir::Files | QDir::NoDotAndDotDot);
+        for (const QString &fname : entries) {
+            QString path = bgDir.filePath(fname);
             toolButtons[i+200] = create_button(0, [=](){
                 drawing->setOverlay(QImage(path), drawing->getPageNum());
                 board->setOverlayType(CUSTOM);
@@ -462,9 +453,7 @@ void setupWidgets(){
             set_icon(path.toStdString().c_str(), toolButtons[i+200]);
             pageLayout->addWidget(toolButtons[i+200], i / 6, i % 6, Qt::AlignCenter);
             i++;
-            //printf ("%s\n", ep->d_name);
         }
-        closedir(dp);
     }
     pageDialog->setFixedSize(
         colorDialog->size().width(),
