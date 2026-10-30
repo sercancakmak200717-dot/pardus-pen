@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: write
-  issues: write
 
 jobs:
   build:
@@ -48,18 +47,17 @@ jobs:
             exit 1
           }
 
-      - name: Post Failure Log to GitHub Issue
+      - name: Push Build Log to debug-log branch on Failure
         if: failure()
         shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $tailLog = Get-Content build.log -Tail 80 -Raw
-          $bodyObj = @{
-            title = "Build Error Diagnostic Log"
-            body = "Build failed. Tail of build.log:`n```text`n$tailLog`n```"
-          } | ConvertTo-Json
-          Invoke-RestMethod -Uri "https://api.github.com/repos/$env:GITHUB_REPOSITORY/issues" -Method Post -Headers @{ Authorization = "Bearer $env:GH_TOKEN" } -Body $bodyObj -ContentType "application/json"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B debug-log
+          Get-Content build.log -Tail 150 | Out-File -FilePath build_error.txt -Encoding utf8
+          git add build_error.txt
+          git commit -m "Auto build error log"
+          git push origin debug-log --force
 
       - name: Bundle Windows Runtime (windeployqt)
         shell: pwsh
