@@ -7,6 +7,10 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+  issues: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -41,12 +45,21 @@ jobs:
         run: |
           cmake --build build --config Release 2>&1 | Tee-Object -FilePath build.log
           if ($LASTEXITCODE -ne 0) {
-            "### Build Error Log (Tail 60 lines):" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY
-            "```" | Out-File -Append -FilePath $env:GITHUB_STEP_SUMMARY
-            Get-Content build.log -Tail 60 | Out-File -Append -FilePath $env:GITHUB_STEP_SUMMARY
-            "```" | Out-File -Append -FilePath $env:GITHUB_STEP_SUMMARY
             exit 1
           }
+
+      - name: Post Failure Log to GitHub Issue
+        if: failure()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tailLog = Get-Content build.log -Tail 80 -Raw
+          $bodyObj = @{
+            title = "Build Error Diagnostic Log"
+            body = "Build failed. Tail of build.log:`n```text`n$tailLog`n```"
+          } | ConvertTo-Json
+          Invoke-RestMethod -Uri "https://api.github.com/repos/$env:GITHUB_REPOSITORY/issues" -Method Post -Headers @{ Authorization = "Bearer $env:GH_TOKEN" } -Body $bodyObj -ContentType "application/json"
 
       - name: Bundle Windows Runtime (windeployqt)
         shell: pwsh
@@ -72,10 +85,3 @@ jobs:
             build/styles/
             build/imageformats/
             build/iconengines/
-
-      - name: Upload Build Log on Failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Build-Log
-          path: build.log
