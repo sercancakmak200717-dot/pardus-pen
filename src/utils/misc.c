@@ -1,3 +1,27 @@
+#ifdef _WIN32
+#include <windows.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <utils/misc.h>
+
+size_t _cur_time;
+size_t get_epoch(){
+    FILETIME ft;
+    GetSystemTimeAsFileTime(&ft);
+    unsigned long long t = ((unsigned long long)ft.dwHighDateTime << 32) | ft.dwLowDateTime;
+    return (size_t)(t / 10);
+}
+
+char* which(const char* cmd){
+    (void)cmd;
+    return strdup("");
+}
+
+void disable_erc(){}
+void enable_erc(){}
+
+#else
 /* for musl libc */
 #ifndef F_OK
 #define F_OK 0
@@ -99,3 +123,5 @@ void enable_erc(){
         unlink(path);
     }
 }
+
+#endif

@@ -1,15 +1,21 @@
 #include <stdlib.h>
 #include <locale.h>
-#include <libintl.h>
 
+#ifdef _WIN32
+#define _(String) (String)
+#ifndef BGDIR
+#define BGDIR "backgrounds"
+#endif
+#else
+#include <libintl.h>
 #ifndef BGDIR
 #define BGDIR "/usr/share/pardus/pardus-pen/backgrounds"
+#endif
+#define _(String) gettext(String)
 #endif
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
-
-#define _(String) gettext(String)
 
 /********** Enums **********/
 

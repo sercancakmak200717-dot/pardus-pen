@@ -5,14 +5,25 @@
 
 #include <constants.h>
 
+#ifndef _WIN32
 #include <unistd.h>
+#endif
+#include <QStandardPaths>
+#include <QDir>
+#include <QFile>
 
 QSettings* settings;
 QSettings* settingsDefault;
 void settings_init() {
+#ifdef _WIN32
+    QString cfgDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    QDir().mkpath(cfgDir);
+    QString settingsFile = cfgDir + "/pardus-pen.ini";
+#else
     QString settingsFile = QString(getenv("HOME"))+"/.config/pardus-pen.conf";
-    settings = new QSettings(settingsFile, QSettings::NativeFormat);
-    settingsDefault = new QSettings("://tr.org.pardus.pen.default.conf", QSettings::NativeFormat);
+#endif
+    settings = new QSettings(settingsFile, QSettings::IniFormat);
+    settingsDefault = new QSettings("://tr.org.pardus.pen.default.conf", QSettings::IniFormat);
     // version check
     int ver = 0;
     int ver_default = settingsDefault->value("version").toInt();
@@ -21,8 +32,8 @@ void settings_init() {
     }
     if(ver < ver_default){
         delete settings;
-        unlink(settingsFile.toStdString().c_str());
-        settings = new QSettings(settingsFile, QSettings::NativeFormat);
+        QFile::remove(settingsFile);
+        settings = new QSettings(settingsFile, QSettings::IniFormat);
         settings->setValue("version", ver_default);
     }
 }
@@ -34,7 +45,6 @@ QString get_string(const char* name) {
     } else {
         value = settingsDefault->value(QString::fromUtf8(name)).toString();
     }
-    //printf("GETSTRING %s:%s\n", name, value.toUtf8().constData());
     return value;
 }
 
@@ -52,19 +62,16 @@ bool get_bool(const char* name) {
     } else {
         value = settingsDefault->value(QString::fromUtf8(name)).toBool();
     }
-    //printf("GETBOOL %s:%d\n", name, value);
     return value;
 }
 
 void set_bool(const char* name, bool value) {
     settings->setValue(QString::fromUtf8(name), value);
-    //printf("SETBOOL %s:%d\n", name, value);
     settings->sync();
 }
 
 void set_string(const char* name, QString value) {
     settings->setValue(QString::fromUtf8(name), value);
-    //printf("SETSTRING %s:%s\n", name, value);
     settings->sync();
 }
 
@@ -75,13 +82,10 @@ int get_int(const char* name) {
     } else {
         value = settingsDefault->value(QString::fromUtf8(name)).toInt();
     }
-    //printf("GETINT %s:%d\n", name, value);
     return value;
 }
 
 void set_int(const char* name, int value) {
     settings->setValue(QString::fromUtf8(name), value);
-    //printf("SETINT %s:%d\n", name, value);
     settings->sync();
 }
-
