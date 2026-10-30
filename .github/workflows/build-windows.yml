@@ -15,6 +15,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Install Qt6
         uses: jurplel/install-qt-action@v4
         with:
@@ -22,7 +27,7 @@ jobs:
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2019_64'
-          modules: 'qtsvg'
+          setup-python: false
 
       - name: Setup MSVC Environment
         uses: ilammy/msvc-dev-cmd@v1
