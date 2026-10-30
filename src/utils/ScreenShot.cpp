@@ -1,7 +1,9 @@
 #if screenshot
 #include <string.h>
 #include <stdlib.h>
+#ifndef _WIN32
 #include <libintl.h>
+#endif
 
 #include <iostream>
 
@@ -16,10 +18,13 @@
 #include <widgets/DrawingWidget.h>
 #include <widgets/WhiteBoard.h>
 
+#ifndef _WIN32
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#endif
 
+#ifndef _WIN32
 static int run_cmd(const char* args[]){
     pid_t pid = fork();
     int status = 0;
@@ -31,6 +36,7 @@ static int run_cmd(const char* args[]){
     }
     return status;
 }
+#endif
 
 void takeScreenshot(){
     QString pics = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
@@ -98,6 +104,7 @@ void takeScreenshot(){
             }
             #endif
         }
+#endif
     }
     // show message
     QMessageBox messageBox;
