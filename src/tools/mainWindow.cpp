@@ -368,9 +368,22 @@ void mainWindowInit(){
 #endif
     mainWindow->showFullScreen();
     QScreen *screen = QGuiApplication::primaryScreen();
-    mainWindow->resize(screen->size().width(), screen->size().height());
+    if(screen){
+        int w = screen->size().width();
+        int h = screen->size().height();
+        mainWindow->resize(w, h);
+        if(mainWidget) mainWidget->setFixedSize(w, h);
+        if(drawing) {
+            drawing->setFixedSize(w, h);
+            drawing->show();
+            drawing->raise();
+        }
+        if(background) background->setFixedSize(w, h);
+        if(board) board->setFixedSize(w, h);
+    }
 #ifdef _WIN32
     if(tool){
+        tool->show();
         tool->raise();
     }
 #endif

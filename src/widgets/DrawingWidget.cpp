@@ -114,6 +114,9 @@ void DrawingWidget::paintEvent(QPaintEvent *event) {
     p.begin(this);
     p.setRenderHint(QPainter::Antialiasing, true);
     p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+#ifdef _WIN32
+    p.fillRect(rect(), QColor(0, 0, 0, 1));
+#endif
     p.drawPixmap(0, 0, image);
     p.end();
 }
@@ -526,6 +529,7 @@ bool DrawingWidget::event(QEvent *ev) {
             eventHandler(tabletEvent->buttons(), MOVE, -2, tabletEvent->position(), tabletEvent->pressure());
             return true;
         }
+#ifndef _WIN32
         case QEvent::MouseButtonPress: {
             if(last_device != DEV_IDLE){
                 break;
@@ -552,6 +556,25 @@ bool DrawingWidget::event(QEvent *ev) {
             eventHandler(mouseEvent->buttons(), MOVE, -1, mouseEvent->position(), 1.0);
             return true;
         }
+#else
+        case QEvent::MouseButtonPress: {
+            last_device = DEV_MOUSE;
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(ev);
+            eventHandler(mouseEvent->buttons(), PRESS, -1, mouseEvent->position(), 1.0);
+            return true;
+        }
+        case QEvent::MouseButtonRelease: {
+            last_device = DEV_IDLE;
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(ev);
+            eventHandler(mouseEvent->buttons(), RELEASE, -1, mouseEvent->position(), 1.0);
+            return true;
+        }
+        case QEvent::MouseMove: {
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(ev);
+            eventHandler(mouseEvent->buttons(), MOVE, -1, mouseEvent->position(), 1.0);
+            return true;
+        }
+#endif
 
         default:
             break;

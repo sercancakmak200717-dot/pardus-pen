@@ -38,7 +38,11 @@ void WhiteBoard::setType(int page){
     set_string("page", get_overlay_by_id(page));
     type = page;
     if(page == TRANSPARENT){
+#ifdef _WIN32
+        background = QColor(0, 0, 0, 1);
+#else
         background = Qt::transparent;
+#endif
         lineColor = QColor("#808080");
     } else if (page == BLACK) {
         background = Qt::black;
