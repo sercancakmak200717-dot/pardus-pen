@@ -36,6 +36,11 @@ static int run_cmd(const char* args[]){
     }
     return status;
 }
+#else
+static int run_cmd(const char* args[]){
+    (void)args;
+    return 1;
+}
 #endif
 
 void takeScreenshot(){
@@ -46,7 +51,22 @@ void takeScreenshot(){
     if (getPen() == SELECTION) {
         drawing->cropWidget->image.save(imgname);
         status = 0;
-    } else if(getPen() != SELECTION) {
+    } else {
+#ifdef _WIN32
+        QPixmap pixmap;
+        if(board->getType() == TRANSPARENT){
+            QScreen *screen = QGuiApplication::primaryScreen();
+            pixmap = screen ? screen->grabWindow(0) : mainWidget->grab();
+        } else {
+            pixmap = mainWidget->grab();
+        }
+        QFile file(imgname);
+        status = 1;
+        if(file.open(QIODevice::WriteOnly)){
+            pixmap.save(&file, "PNG");
+            status = 0;
+        }
+#else
         // detect X11
         if (!getenv("WAYLAND_DISPLAY")){
             QPixmap pixmap;
