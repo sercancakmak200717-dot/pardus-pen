@@ -186,7 +186,11 @@ void setupTools(){
     // detect x11
     if(!is_wayland){
         // main toolbar
+#ifdef _WIN32
+        tool = new QMainWindow(mainWindow);
+#else
         tool = new QMainWindow();
+#endif
         tool->setWindowFlags(Qt::WindowStaysOnTopHint
                               | Qt::Tool
                               | Qt::X11BypassWindowManagerHint
@@ -200,7 +204,11 @@ void setupTools(){
         );
 
         // second toolbar
+#ifdef _WIN32
+        tool2 = new QMainWindow(mainWindow);
+#else
         tool2 = new QMainWindow();
+#endif
         tool2->setWindowFlags(Qt::WindowStaysOnTopHint
                               | Qt::Tool
                               | Qt::X11BypassWindowManagerHint

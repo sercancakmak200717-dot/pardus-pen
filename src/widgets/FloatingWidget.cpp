@@ -28,6 +28,7 @@ FloatingWidget::FloatingWidget(QWidget *parent) : QWidget(parent) {
     "}");
     setLayout(layout);
     setStyleSheet(style);
+    setCursor(Qt::ArrowCursor);
     cur_height = PADDING;
     for(int i=0;i<num_of_rows;i++){
         QLabel *label = new QLabel();

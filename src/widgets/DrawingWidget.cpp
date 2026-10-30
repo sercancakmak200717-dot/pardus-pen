@@ -464,6 +464,22 @@ void DrawingWidget::eventHandler(int source, int type, int id, QPointF pos, floa
 #define DEV_TABLET 2
 
 static int last_device = 0;
+#ifdef _WIN32
+static bool isOverToolbar(const QPointF &globalPos) {
+    if (tool && tool->isVisible()) {
+        if (tool->geometry().contains(globalPos.toPoint())) {
+            return true;
+        }
+    }
+    if (tool2 && tool2->isVisible()) {
+        if (tool2->geometry().contains(globalPos.toPoint())) {
+            return true;
+        }
+    }
+    return false;
+}
+#endif
+
 bool DrawingWidget::event(QEvent *ev) {
     switch (ev->type()) {
         case QEvent::TouchBegin:
@@ -558,19 +574,37 @@ bool DrawingWidget::event(QEvent *ev) {
         }
 #else
         case QEvent::MouseButtonPress: {
-            last_device = DEV_MOUSE;
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(ev);
+            if (isOverToolbar(mouseEvent->globalPosition())) {
+                if (tool) tool->raise();
+                if (tool2 && tool2->isVisible()) tool2->raise();
+                return false;
+            }
+            last_device = DEV_MOUSE;
             eventHandler(mouseEvent->buttons(), PRESS, -1, mouseEvent->position(), 1.0);
             return true;
         }
         case QEvent::MouseButtonRelease: {
-            last_device = DEV_IDLE;
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(ev);
+            if (isOverToolbar(mouseEvent->globalPosition())) {
+                if (tool) tool->raise();
+                if (tool2 && tool2->isVisible()) tool2->raise();
+                return false;
+            }
+            last_device = DEV_IDLE;
             eventHandler(mouseEvent->buttons(), RELEASE, -1, mouseEvent->position(), 1.0);
             return true;
         }
         case QEvent::MouseMove: {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(ev);
+            if (isOverToolbar(mouseEvent->globalPosition())) {
+                if (tool) tool->raise();
+                if (tool2 && tool2->isVisible()) tool2->raise();
+                setCursor(Qt::ArrowCursor);
+                return false;
+            } else {
+                setCursor(Qt::CrossCursor);
+            }
             eventHandler(mouseEvent->buttons(), MOVE, -1, mouseEvent->position(), 1.0);
             return true;
         }
