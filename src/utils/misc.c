@@ -1,21 +1,17 @@
 #ifdef _WIN32
-#include <windows.h>
-#include <stdio.h>
+#include <time.h>
 #include <stdlib.h>
 #include <string.h>
 #include <utils/misc.h>
 
-size_t _cur_time;
+size_t _cur_time = 0;
 size_t get_epoch(){
-    FILETIME ft;
-    GetSystemTimeAsFileTime(&ft);
-    unsigned long long t = ((unsigned long long)ft.dwHighDateTime << 32) | ft.dwLowDateTime;
-    return (size_t)(t / 10);
+    return (size_t)time(NULL) * 1000000;
 }
 
 char* which(const char* cmd){
     (void)cmd;
-    return strdup("");
+    return _strdup("");
 }
 
 void disable_erc(){}

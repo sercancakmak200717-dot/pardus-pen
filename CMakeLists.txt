@@ -10,6 +10,9 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Svg)
 
+# Compile misc.c with C++ compiler to avoid MSVC C89 limitations
+set_source_files_properties(src/utils/misc.c PROPERTIES LANGUAGE CXX)
+
 set(SOURCES
     src/main.cpp
     src/SetupWidgets.cpp
@@ -49,7 +52,15 @@ target_include_directories(pardus-pen PRIVATE
 target_compile_definitions(pardus-pen PRIVATE
     screenshot
     QT6
+    _USE_MATH_DEFINES
+    _CRT_SECURE_NO_WARNINGS
+    _CRT_NONSTDC_NO_DEPRECATE
+    NOMINMAX
 )
+
+if(MSVC)
+    target_compile_options(pardus-pen PRIVATE /EHsc /utf-8)
+endif()
 
 target_link_libraries(pardus-pen PRIVATE
     Qt6::Core
@@ -59,6 +70,5 @@ target_link_libraries(pardus-pen PRIVATE
 )
 
 if(WIN32)
-    # Win32 GUI app (hide console window)
     set_target_properties(pardus-pen PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
