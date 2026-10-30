@@ -34,6 +34,10 @@ extern "C" {
         return NULL;
     }
 }
+#else
+static QString archive_target;
+static void *save_all(void* arg) { (void)arg; return NULL; }
+static void *load_archive(void* arg) { (void)arg; return NULL; }
 #endif
 
 void openFile(QString filename){
