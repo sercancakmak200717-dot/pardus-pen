@@ -47,9 +47,6 @@ public:
         setAttribute(Qt::WA_TranslucentBackground, true);
         setAttribute(Qt::WA_NoSystemBackground, true);
         setAttribute(Qt::WA_AcceptTouchEvents, true);
-#ifdef _WIN32
-        setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
-#endif
 
         mainWidget = new QWidget(this);
         mainWidget->setAttribute(Qt::WA_AcceptTouchEvents, true);
@@ -122,33 +119,34 @@ protected:
     }
     void resizeEvent(QResizeEvent *event) override {
         screen = QGuiApplication::primaryScreen();
-        mainWidget->setFixedSize(screen->size().width(), screen->size().height());
-        drawing->setFixedSize(screen->size().width(), screen->size().height());
-        background->setFixedSize(screen->size().width(), screen->size().height());
-        board->setFixedSize(screen->size().width(), screen->size().height());
+        if (screen) {
+            if (mainWidget) mainWidget->setFixedSize(screen->size().width(), screen->size().height());
+            if (drawing) drawing->setFixedSize(screen->size().width(), screen->size().height());
+            if (background) background->setFixedSize(screen->size().width(), screen->size().height());
+            if (board) board->setFixedSize(screen->size().width(), screen->size().height());
+        }
 
-        scrollHSlider->setFixedSize(event->size().width() - SCROLLSIZE*2, SCROLLSIZE);
-        scrollHSlider->move(SCROLLSIZE, event->size().height() - SCROLLSIZE);
-        scrollHSlider->setRange(0, screen->size().width() - event->size().width() );
+        if (scrollHSlider && scrollVSlider && screen) {
+            scrollHSlider->setFixedSize(event->size().width() - SCROLLSIZE*2, SCROLLSIZE);
+            scrollHSlider->move(SCROLLSIZE, event->size().height() - SCROLLSIZE);
+            scrollHSlider->setRange(0, screen->size().width() - event->size().width() );
 
-        scrollVSlider->setFixedSize(SCROLLSIZE, event->size().height() - SCROLLSIZE*2);
-        scrollVSlider->move(event->size().width() - SCROLLSIZE, SCROLLSIZE);
-        scrollVSlider->setRange(0, screen->size().height() - event->size().height() );
+            scrollVSlider->setFixedSize(SCROLLSIZE, event->size().height() - SCROLLSIZE*2);
+            scrollVSlider->move(event->size().width() - SCROLLSIZE, SCROLLSIZE);
+            scrollVSlider->setRange(0, screen->size().height() - event->size().height() );
+        }
 
         debug("width:%d height:%d \n",event->size().width(), event->size().height());
-        floatingWidget->new_x = get_int("cur-x");
-        floatingWidget->new_y = get_int("cur-y");
-        // tool is not set under wayland
         if(floatingWidget != nullptr) {
+            floatingWidget->new_x = get_int("cur-x");
+            floatingWidget->new_y = get_int("cur-y");
             if(!is_wayland){
-                tool->resize(floatingWidget->geometry().width(), floatingWidget->geometry().height());
+                if (tool) tool->resize(floatingWidget->geometry().width(), floatingWidget->geometry().height());
+                if (tool2 && floatingSettings) tool2->resize(floatingSettings->geometry().width(), floatingSettings->geometry().height());
             }
-            if(!is_wayland){
-                tool2->resize(floatingSettings->geometry().width(), floatingSettings->geometry().height());
-            }
-            drawing->update();
+            if (drawing) drawing->update();
+            floatingWidget->moveAction();
         }
-        floatingWidget->moveAction();
         // Call the base class implementation
         QWidget::resizeEvent(event);
     }
@@ -164,18 +162,18 @@ protected:
         }
         if(!is_wayland){
             if (event->type() == QEvent::WindowStateChange) {
-                tool2->hide();
+                if (tool2) tool2->hide();
                 if (isMinimized()) {
-                    tool->hide();
-                    tool3->show();
+                    if (tool) tool->hide();
+                    if (tool3) { tool3->show(); tool3->raise(); }
                 } else {
-                    tool->show();
-                    tool3->hide();
+                    if (tool) { tool->show(); tool->raise(); }
+                    if (tool3) tool3->hide();
                 }
             }
         }
-        floatingSettings->setHide();
-        drawing->update();
+        if (floatingSettings) floatingSettings->setHide();
+        if (drawing) drawing->update();
     }
 };
 
@@ -188,11 +186,7 @@ void setupTools(){
     // detect x11
     if(!is_wayland){
         // main toolbar
-#ifdef _WIN32
-        tool = new QMainWindow(mainWindow);
-#else
         tool = new QMainWindow();
-#endif
         tool->setWindowFlags(Qt::WindowStaysOnTopHint
                               | Qt::Tool
                               | Qt::X11BypassWindowManagerHint
@@ -206,11 +200,7 @@ void setupTools(){
         );
 
         // second toolbar
-#ifdef _WIN32
-        tool2 = new QMainWindow(mainWindow);
-#else
         tool2 = new QMainWindow();
-#endif
         tool2->setWindowFlags(Qt::WindowStaysOnTopHint
                               | Qt::Tool
                               | Qt::X11BypassWindowManagerHint
@@ -373,6 +363,9 @@ void mainWindowInit(){
         desktopWidget->setMainWindow(mainWindow);
     }
     setupWidgets();
+#ifdef _WIN32
+    mainWindow->setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+#endif
     mainWindow->showFullScreen();
     QScreen *screen = QGuiApplication::primaryScreen();
     mainWindow->resize(screen->size().width(), screen->size().height());
