@@ -8,7 +8,9 @@
 
 #include <stdlib.h>
 #include <locale.h>
+#ifndef _WIN32
 #include <libintl.h>
+#endif
 
 #include <constants.h>
 #include <utils/Settings.h>
@@ -17,6 +19,10 @@
 
 #include <utils/eta-keyboard.h>
 #include <utils/misc.h>
+
+#ifdef _WIN32
+#define setenv(k, v, o) _putenv_s(k, v)
+#endif
 
 
 bool is_wayland;
@@ -45,6 +51,9 @@ static void accept_screenshot_permission(){
 #endif
 
 static bool detect_etap(){
+#ifdef _WIN32
+    return false;
+#else
     FILE *f = fopen("/etc/os-release", "r");
     if(f == NULL){
         return false;
@@ -53,11 +62,13 @@ static bool detect_etap(){
     while (fgets(buffer, sizeof(buffer), f)) {
         char needed[] = "VERSION_CODENAME=";
         if(strncmp(needed, buffer, strlen(needed)) == 0){
+            fclose(f);
             return (strncmp(buffer+strlen(needed), "etap", 4) == 0);
         }
     }
     fclose(f);
     return false;
+#endif
 }
 
 int main(int argc, char *argv[]) {
@@ -102,6 +113,7 @@ int main(int argc, char *argv[]) {
         history = 50;
     }
 
+#ifndef _WIN32
     // translation part
     const char *systemLanguage = getenv("LANG");
     if (systemLanguage != nullptr) {
@@ -111,6 +123,7 @@ int main(int argc, char *argv[]) {
     } else {
         fprintf(stderr, "WARNING: LANG environment variable not set.\n");
     }
+#endif
 
     #ifdef QT5
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
@@ -155,5 +168,3 @@ int main(int argc, char *argv[]) {
 #endif
     return app.exec();
 }
-
-

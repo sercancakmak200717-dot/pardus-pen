@@ -4,7 +4,10 @@
 #include <QFile>
 #include <QMutex>
 
+#ifndef _WIN32
 #include <libgen.h>
+#endif
+#include <QFileInfo>
 
 #include <constants.h>
 #include <widgets/DrawingWidget.h>
@@ -131,10 +134,8 @@ void setupSaveLoad(){
 
 bool saveImageToFile(const QImage &image, const QString &imageFilePath) {
     QDir dir;
-    char* fname = strdup(imageFilePath.toStdString().c_str());
-    char* basedir = dirname(fname);
-    dir.mkpath(QString::fromUtf8(basedir));
-    free(fname);
+    QString basedir = QFileInfo(imageFilePath).absolutePath();
+    dir.mkpath(basedir);
     if (image.isNull()) {
         return false;
     }
@@ -169,5 +170,3 @@ QImage loadImageFromFile(const QString &imageFilePath) {
     QImage loadedImage(reinterpret_cast<const uchar*>(loadedData.constData()), width, height, static_cast<QImage::Format>(format));
     return loadedImage.copy();
 }
-
-
