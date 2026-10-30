@@ -47,6 +47,9 @@ public:
         setAttribute(Qt::WA_TranslucentBackground, true);
         setAttribute(Qt::WA_NoSystemBackground, true);
         setAttribute(Qt::WA_AcceptTouchEvents, true);
+#ifdef _WIN32
+        setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+#endif
 
         mainWidget = new QWidget(this);
         mainWidget->setAttribute(Qt::WA_AcceptTouchEvents, true);
@@ -185,7 +188,11 @@ void setupTools(){
     // detect x11
     if(!is_wayland){
         // main toolbar
+#ifdef _WIN32
+        tool = new QMainWindow(mainWindow);
+#else
         tool = new QMainWindow();
+#endif
         tool->setWindowFlags(Qt::WindowStaysOnTopHint
                               | Qt::Tool
                               | Qt::X11BypassWindowManagerHint
@@ -199,7 +206,11 @@ void setupTools(){
         );
 
         // second toolbar
+#ifdef _WIN32
+        tool2 = new QMainWindow(mainWindow);
+#else
         tool2 = new QMainWindow();
+#endif
         tool2->setWindowFlags(Qt::WindowStaysOnTopHint
                               | Qt::Tool
                               | Qt::X11BypassWindowManagerHint
@@ -234,7 +245,7 @@ void setupTools(){
         tool3->setCentralWidget(desktopWidget);
 
         tool->show();
-        tool3->show();
+        tool3->hide();
         tool2->hide();
     } else {
 #endif
@@ -256,8 +267,19 @@ void setupTools(){
     toolButtons[MINIFY] = create_button(MINIFY, [=](){
         if(!mainWindow->isMinimized()){
             mainWindow->showMinimized();
+#ifdef _WIN32
+            tool->hide();
+            tool2->hide();
+            tool3->show();
+            tool3->raise();
+#endif
         } else {
              mainWindow->showFullScreen();
+#ifdef _WIN32
+            tool3->hide();
+            tool->show();
+            tool->raise();
+#endif
         }
     });
     set_shortcut(toolButtons[MINIFY], Qt::Key_D, Qt::MetaModifier);
@@ -267,6 +289,11 @@ void setupTools(){
          ssWidget->hide();
          #endif
          mainWindow->showFullScreen();
+#ifdef _WIN32
+         tool3->hide();
+         tool->show();
+         tool->raise();
+#endif
     });
 
     QScreen *screen = QGuiApplication::primaryScreen();
@@ -349,7 +376,11 @@ void mainWindowInit(){
     mainWindow->showFullScreen();
     QScreen *screen = QGuiApplication::primaryScreen();
     mainWindow->resize(screen->size().width(), screen->size().height());
-
+#ifdef _WIN32
+    if(tool){
+        tool->raise();
+    }
+#endif
 
     setPen(PEN);
 }

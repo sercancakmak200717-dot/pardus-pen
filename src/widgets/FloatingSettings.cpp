@@ -98,6 +98,9 @@ void FloatingSettings::setPage(int num){
     }
     if(tool2 != nullptr) {
         tool2->show();
+#ifdef _WIN32
+        tool2->raise();
+#endif
     } else {
         show();
     }

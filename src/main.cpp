@@ -87,6 +87,9 @@ int main(int argc, char *argv[]) {
 #endif
 
     is_etap = detect_etap();
+#ifdef _WIN32
+    is_wayland = false;
+#else
     is_wayland = (getenv("WAYLAND_DISPLAY") != NULL);
     // gnome wayland fullscreen compositor is buggy.
     // Force prefer Xwayland for fix this issue.
@@ -99,6 +102,7 @@ int main(int argc, char *argv[]) {
         setenv("QT_QPA_PLATFORM", "xcb;wayland",1);
         is_wayland = false;
     }
+#endif
     //Force ignore system dpi
     setenv("QT_AUTO_SCREEN_SCALE_FACTOR", "0", 1);
     setenv("QT_ENABLE_HIGHDPI_SCALING", "0", 1);
@@ -147,10 +151,14 @@ int main(int argc, char *argv[]) {
     #endif
     app.installTranslator(&qtTranslator);
 
+#ifdef _WIN32
+    is_wayland = false;
+#else
     QString qpa = QGuiApplication::platformName();
     if(qpa != QString("xcb")){
         is_wayland = true;
     }
+#endif
 
     mainWindowInit();
 
@@ -168,3 +176,5 @@ int main(int argc, char *argv[]) {
 #endif
     return app.exec();
 }
+
+
